@@ -1,0 +1,753 @@
+---
+output: 
+  pdf_document:
+    number_sections: true
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r imports, echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+# Prerequisites: Libraries required for the project
+library(dplyr)
+library(clue)
+library(modeest)
+library(ggplot2)
+library(GGally)
+library(car)
+library(ggfortify)
+library(patchwork)
+library(scales)
+library(naniar)
+library(ggcorrplot)
+library(glmnet)
+library(fastDummies)
+library(forcats)
+library(corrplot)
+```
+
+
+\thispagestyle{empty}
+
+\begin{center}
+
+\textbf{\Huge ALY 6015: Intermediate analytics \\ Final Project Report}
+
+\textbf{\Large Melbourne Housing Data analysis}
+
+\textbf{\Large Jose De Leon} \\
+\textbf{\Large Sanna K Baldeh} \\
+\textbf{\Large Darshil Dinesh Mistry} \\
+\textbf{\Large MD Maniur Rahman} \\
+
+
+
+\end{center}
+
+\newpage
+
+\thispagestyle{empty}
+
+\tableofcontents
+
+\newpage
+
+\section{Introduction}
+\subsection{The Data}
+
+```{r read, echo=FALSE, results='hide'}
+df <- read.csv("Melbourne_housing.csv")
+glimpse(df)
+```
+
+The data we selected for the final project is the Melbourne Housing Dataset, sourced from kaggle.come. It includes records of significant features and transactions related to seller houses in Melbourne, Australia. The dataset contains information about the property’s location, number of rooms, type of property, land dimension, floor area, time of sale, sale price, sale method (e.g., auction or private), and the estate agent involved in the transaction. It provides important information for understanding trends in the Melbourne housing market and modeling property prices, as well as examining how various local characteristics contribute to changing real estate values. The following is a list of all the columns included.
+
+\begin{itemize}
+  \item \textbf{Suburb:} The suburb house is located in.
+  \item \textbf{Address:} Property address.
+  \item \textbf{Rooms:} Number of rooms.
+  \item \textbf{Type:} Type of property.
+  \item \textbf{Method:} Is the property sold or is still available.
+  \item \textbf{SellerG:} Realtor the house is listed with.
+  \item \textbf{Date:} Date the property was sold.(if sold)
+  \item \textbf{Distance:} Distance from the nearest Central Business District.
+  \item \textbf{PostCode:} Postal code of the house.
+  \item \textbf{Bedroom:} Number of bedrooms.
+  \item \textbf{Bathroom:} Number of bathrooms.
+  \item \textbf{Car:} Number of cars that can be parked.
+  \item \textbf{Landsize:} Size of the land.
+  \item \textbf{BuildingArea:} The carpet area. 
+  \item \textbf{YearBuilt:} Year when the house was built.
+  \item \textbf{CouncilArea:} The Council jurisdiction the house falls under.
+  \item \textbf{Latitude:} Geographic latitude.
+  \item \textbf{Longitude:} Geographic longitude.
+  \item \textbf{RegionName:} Region the house is located in.
+  \item \textbf{PropertyCount:} The number of houses available at a location.
+  \item \textbf{ParkingArea:} Area of private parking.
+  \item \textbf{Price:} Selling price of the property.
+\end{itemize}
+
+\newpage
+\subsection{Cleaning}
+The dataset was collected from real world sources. Hence the data was not very clean. It had many null values and outliers. Thus, before starting our analysis, we analyze the data for missing values and outliers and apply fixes where needed.
+
+```{r one, echo=FALSE}
+cat("\nTotal number of rows: ", nrow(df))
+cat("\nNumber of rows with at least one missing value: ", df %>% filter(if_any(everything(), is.na)) %>% nrow())
+cat("\n")
+colSums(is.na(df))
+```
+Focusing on the null values, we impute data where possible and remove those which can not be imputed. We also fixed the data types where needed.
+
+```{r two, results='hide'}
+# Convert BuildingArea to numeric and handle 'Inf'
+df$BuildingArea <- suppressWarnings(as.numeric(df$BuildingArea))
+df$BuildingArea[is.infinite(df$BuildingArea)] <- NA
+
+# Replace 0 in Landsize with NA
+df$Landsize[df$Landsize == 0] <- NA
+
+# Remove any commas, spaces, or non-numeric characters if needed
+df$Distance <- gsub(",", "", df$Distance)
+df$Distance <- trimws(df$Distance)
+
+# Convert to numeric the variable distance
+df$Distance <- as.numeric(df$Distance)
+
+#inputing distance missing value
+df$Distance[is.na(df$Distance)] <- median(df$Distance, na.rm = TRUE)
+# Drop unnecessary columns (keep CouncilArea, ParkingArea, Propertycount)
+df <- dplyr::select(df, -Latitude, -Longtitude, -Address, -SellerG, -Date, -Method,
+-Postcode)
+# Impute with median: Landsize, Car, Bathroom, Bedroom, Propertycount
+for (col in c("Landsize", "Car", "Bathroom", "Bedroom", "Propertycount")) {
+df[[col]][is.na(df[[col]])] <- median(df[[col]], na.rm = TRUE)
+}
+
+# Impute BuildingArea with mean
+df$BuildingArea[is.na(df$BuildingArea)] <- mean(df$BuildingArea, na.rm =
+TRUE)
+
+# Impute YearBuilt with mode
+df$YearBuilt[is.na(df$YearBuilt)] <- mfv(df$YearBuilt, na_rm = TRUE)
+
+# Save rows with missing Price to a separate table
+missing_price_rows <- df %>%
+filter(is.na(Price))
+df <- df %>%
+filter(!is.na(Price), !is.na(Distance), !is.na(Suburb))
+df$Suburb <- droplevels(as.factor(df$Suburb))
+
+# Clean Regionname in both datasets (remove "Metropolitan")
+df$Regionname <- gsub(" Metropolitan", "", df$Regionname)
+missing_price_rows$Regionname <- gsub(" Metropolitan", "",
+missing_price_rows$Regionname)
+
+# Filter out rows with missing price
+df <- df %>%
+filter(!is.na(Price) & !is.na(Type) & !is.na(Regionname))
+
+
+df$Propertycount <- as.integer(df$Propertycount)
+
+df <- na.omit(df)
+```
+
+With the missing values dealt with, we can focus on outliers. We check the summary and box plots to understand the outliers.
+
+```{r three, echo=FALSE, results='hold', fig.width=6}
+cat("\n\n")
+summary(df)
+
+plots <- list()
+for (col in names(df)) {
+  if (is.numeric(df[[col]])) {
+    p <- ggplot(df, aes(x = "", y = !!sym(col))) + 
+      geom_boxplot() + 
+      labs(title = paste(col)) +
+      theme_minimal() +
+      coord_flip()+
+      xlab(NULL)+
+      ylab(NULL)
+    
+    plots[[length(plots) + 1]] <- p
+  }
+}
+
+wrap_plots(plots, ncol = 3)
+```
+Based on the boxplot and summary; Car, Landsize, BuildingArea, Yearbuilt, Property count and price are the columns that have significant outliers, that can affect our analysis and cause distortions. They can be removed as follows
+
+```{r four}
+remove_outliers_iqr <- function(df, cols) {
+  keep <- rep(TRUE, nrow(df)) 
+
+  for (col in cols) {
+    if (!is.numeric(df[[col]])) {
+      warning(paste("Skipping non-numeric column:", col))
+      next
+    }
+
+    Q1 <- quantile(df[[col]], 0.25, na.rm = TRUE)
+    Q3 <- quantile(df[[col]], 0.75, na.rm = TRUE)
+    IQR_val <- Q3 - Q1
+    lower <- Q1 - 1.5 * IQR_val
+    upper <- Q3 + 1.5 * IQR_val
+
+    keep <- keep & df[[col]] >= lower & df[[col]] <= upper
+  }
+
+  return(df[keep, ])
+}
+
+cols_to_trim <- c("Car", "Landsize", "BuildingArea", "YearBuilt", "Propertycount", "Price")
+df <- remove_outliers_iqr(df, cols_to_trim)
+```
+
+\newpage
+\section{Exploratory Data Analysis}
+With the data cleaned, we can focus on exploratory data analysis, creating visualizations and exploring the data.
+
+```{r five, fig.height=8, fig.width=8, echo=FALSE}
+plots <- list()
+for (col in colnames(df)) {
+  if (is.numeric(df[[col]])) {
+    p <- ggplot(df, aes(x = !!sym(col))) +
+      geom_histogram(bins = 30, fill = "steelblue", color = "white") +
+      labs(title = paste(col)) +
+      theme_minimal() +
+      xlab(NULL) +
+      ylab(NULL)
+    
+  } else if (is.factor(df[[col]]) || is.character(df[[col]])) {
+    if (length(unique(df[[col]])) > 5) {
+      p <- ggplot() +
+        annotate("text", x = 0.5, y = 0.6, label = paste(col, "\nToo many categories"), size = 4, hjust = 0.5) +
+        theme_void()
+    } else {
+      p <- ggplot(df, aes(x = !!sym(col))) +
+        geom_bar(fill = "tomato") +
+        labs(title = paste(col)) +
+        theme_minimal() +
+        xlab(NULL) +
+        ylab(NULL)
+    }
+  } else {
+    next
+  }
+  
+  plots[[length(plots) + 1]] <- p
+}
+
+wrap_plots(plots, ncol = 3)
+```
+
+\section{Research Questions}
+\#Research Question #1
+\subsection{How does the location (suburb and distance to CBD) affect housing prices?}
+```{r six, echo=FALSE, results='hide'}
+# Top 10 most frequent suburbs
+top_suburbs <- df %>%
+  count(Suburb, sort = TRUE) %>%
+  top_n(10, n) %>%
+  pull(Suburb)
+
+# Filter to only top suburbs
+df_top_suburbs <- df %>%
+  filter(Suburb %in% top_suburbs)
+
+# Boxplot of price by suburb
+ggplot(df_top_suburbs, aes(x = Suburb, y = Price)) +
+  geom_boxplot(fill = "lightblue") +
+  labs(title = "House Prices by Suburb (Top 10)", x = "Suburb", y = "Price (AUD)") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# Scatterplot: Distance to CBD vs Price
+ggplot(df, aes(x = Distance, y = Price)) +
+  geom_point(alpha = 0.3, color = "steelblue") +
+  labs(title = "Scatterplot of Distance to CBD vs Price", x = "Distance (km)", y = "Price (AUD)")
+
+
+# Correlation Between Distance and Price
+cor(df$Distance, df$Price, use = "complete.obs")
+
+#RESEARCH QUESTION #1
+#Multiple Linear Regression for question 1
+# Make sure Suburb is a factor
+df$Suburb <- as.factor(df$Suburb)
+
+# Fit the regression model
+df_clean <- df %>%
+  filter(!is.na(Price), !is.na(Distance), !is.na(Suburb)) %>%
+  mutate(Suburb = droplevels(as.factor(Suburb)))
+
+model <- lm(Price ~ Distance + Suburb, data = df_clean)
+
+summary(model)
+
+
+# Q-Q Plot for normality of residuals
+
+# Q-Q plot with matching labels
+qqPlot(model, simulate = FALSE, main = "Q-Q Plot of Residuals")
+
+
+# Component + Residual (Partial Residual) Plots – assess linearity
+crPlots(model, main = "Component + Residual Plots")
+
+# Spread-Level Plot – check constant variance (homoscedasticity)
+
+# Get studentized residuals and fitted values
+resid <- rstudent(model)
+fitted <- fitted.values(model)
+
+spread_df <- data.frame(
+  log_abs_resid = log(abs(resid)),
+  log_fitted = log(fitted)
+)
+
+ggplot(spread_df, aes(x = log_fitted, y = log_abs_resid)) +
+  geom_point(alpha = 0.4, color = "steelblue") +
+  geom_smooth(method = "lm", se = FALSE, color = "red", linetype = "dashed") +
+  labs(
+    title = "Spread-Level Plot (Manual)",
+    x = "log(Fitted Values)",
+    y = "log(Absolute Studentized Residuals)"
+  ) +
+  theme_minimal()
+#homoscedasticity
+plot(model$fitted.values, rstandard(model),
+     xlab = "Fitted Values", ylab = "Standardized Residuals",
+     main = "Residuals vs Fitted")
+abline(h = 0, col = "red", lty = 2)
+
+#multicollinearity
+vif(model)  # Expect high VIFs 
+
+#counting number of predictors
+# Step 1: Get model summary
+model_summary <- summary(model)
+
+# Step 2: Count number of variables (excluding intercept)
+num_predictors <- nrow(model_summary$coefficients) - 1
+cat("Number of predictors (excluding intercept):", num_predictors, "\n")
+
+# Step 3: Count number of significant variables at p < 0.001
+p_values <- model_summary$coefficients[-1, 4]  # exclude intercept row
+num_significant <- sum(p_values < 0.001)
+cat("Number of predictors with p < 0.001 (***):", num_significant, "\n")
+
+#Region model - model #2
+# Fit the regression model with Distance and Region
+model_region <- lm(Price ~ Distance + Regionname, data = df)
+summary(model_region)
+#summary(model)
+
+#multicollinearity for region model
+vif(model_region)
+#vif(model)
+
+
+
+#log distance model - model #3
+df$logDistance <- log(df$Distance + 1)
+
+# Fit the model with log(Distance) and Regionname
+model_logdist <- lm(Price ~ logDistance + Regionname, data = df)
+summary(model_logdist)
+
+vif(model_logdist)
+#corrplot - last model #4
+
+# Step 1: Keep only numeric columns
+numeric_vars <- df[, sapply(df, is.numeric)]
+
+# Step 2: Remove rows with missing values
+numeric_clean <- na.omit(numeric_vars)
+
+# Step 3: Compute correlation matrix
+cor_matrix <- cor(numeric_clean, use = "complete.obs")
+
+# Step 4: Show correlation of all variables with Price
+cor_matrix["Price", ]
+
+
+#corrplot(cor_matrix, method = "color", type = "upper", order = "hclust")
+
+#last peferct model
+lastmodel_distance <- lm(
+  Price ~  Distance + Rooms + Landsize + Regionname + BuildingArea  + Bathroom + Type + YearBuilt + Car,
+  data = df
+)
+
+summary(lastmodel_distance)
+#vif(lastmodel_distance)
+# AIC comparison
+AIC(lastmodel_distance, model_region, model_logdist)
+# BIC comparison
+BIC(lastmodel_distance, model_region, model_logdist)
+
+```
+\#Research Question #1
+\subsection{How does the location (suburb and distance to CBD) affect housing prices?}
+Based on the preliminary exploratory data analysis, an initial regression model (model_region) was developed to assess how location, specifically Distance to the Central Business District (CBD) and Regionname , influenced housing prices. This baseline model revealed that Distance had a significant negative effect on price, and certain regions (e.g., Southern, Western) exhibited substantial variation. However, the model explained only 18% of the variance in price (adjusted R² = 0.1805), and diagnostic checks revealed non-linearity and heteroscedasticity.
+To improve linearity, a second model (model_logdist) was introduced, applying a log transformation to Distance while retaining Regionname. Although this modified the coefficient interpretation, it did not improve overall performance (adjusted R² = 0.1742), and both AIC and BIC remained high relative to the baseline. These results suggested that while location mattered, it alone was insufficient to explain housing price variation in Melbourne.
+
+This led to the development of a more comprehensive model, lastmodel_distance, which added key property-level features alongside Distance and Regionname. These included Rooms, Bathroom, Landsize, BuildingArea, YearBuilt, Type, and Car, all of which were identified during EDA (table 2 in the appendix) as being significantly correlated with Price. The final model achieved substantial improvements across all evaluation metrics: adjusted R² increased to 0.5677, residual standard error dropped to 421,800, and both AIC and BIC values were significantly lower than in previous models. Additionally, all predictors were statistically significant (p < 0.001), with the exception of RegionnameWestern Victoria, and multicollinearity was not a concern (all GVIFs < 2.1). These improvements validated the decision to integrate both geographic and physical property characteristics for more accurate modeling. The summary of the calculations can be found in table 1 in the appendix.
+
+In answering Research Question 1 — How does location (suburb and distance to CBD) affect housing prices? — the results show that while location is indeed a key factor, not all location-based variables contribute equally. Initially, Suburb was considered a predictor due to notable price variation across neighborhoods; however, incorporating Suburb introduced severe multicollinearity, reducing model clarity. Broader location variables like Regionname and Distance proved to be more effective and stable predictors. In the final model, Distance had a strong negative association with price, and some regions (e.g., Southern, Eastern Victoria) consistently saw higher prices than others (e.g., Western, Northern). Still, location alone was not sufficient, the model's improvement came primarily from incorporating structural property features such as Rooms, Bathroom, Landsize, BuildingArea, YearBuilt, Car, and Type, all of which added significant predictive value.
+
+For future research, to further enhance model performance, a second, more focused round of exploratory data analysis could be conducted. This will specifically examine whether key predictors like Distance, Landsize, BuildingArea, and Rooms have nonlinear relationships with housing prices. Using diagnostic plots and smoothing techniques, the goal is to identify where transformations or flexible modeling (e.g., splines or GAMs) can improve predictive accuracy and model fit.
+
+
+
+\#Research Question #2
+\subsection{Is there a significant difference in housing prices based on number of rooms and property type?}
+```{r seven, echo=FALSE, results='asis'}
+
+# Boxplot: Price by Number of Rooms
+ggplot(df, aes(x = factor(Rooms), y = Price)) +
+  geom_boxplot(fill = "steelblue", alpha = 0.7, outlier.color = "red") +
+  scale_y_continuous(labels = comma) +
+  labs(title = "House Price by Number of Rooms",
+       x = "Number of Rooms", y = "Price (AUD)") +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 14, face = "bold"))
+
+# ANOVA: Test if number of rooms affects price
+anova_rooms <- aov(Price ~ factor(Rooms), data = df)
+#anova_rooms
+
+# Boxplot: Price by Property Type
+ggplot(df, aes(x = Type, y = Price, fill = Type)) +
+  geom_boxplot(alpha = 0.8, outlier.color = "black") +
+  scale_y_continuous(labels = comma) +
+  labs(title = "House Price by Property Type",
+       x = "Property Type", y = "Price (AUD)") +
+  theme_minimal() +
+  theme(legend.position = "none",
+        plot.title = element_text(size = 14, face = "bold"))
+
+# ANOVA: Test if property type affects price
+anova_type <- aov(Price ~ Type, data = df)
+#anova_type
+
+# Tukey HSD: Post-hoc test for property type differences
+TukeyHSD(anova_type)
+```
+\#Research Question #2
+\subsection{Is there a significant difference in housing prices based on number of rooms and property type?}
+To examine whether house prices in Melbourne differ significantly based on the number of rooms and property type, we performed two separate one-way ANOVAs. This method is appropriate because both predictors—Rooms and Type—are categorical variables, and our goal was to compare the mean house prices across multiple independent groups.
+
+\subsubsection{Effect of Room Count on Price}
+A one-way ANOVA was conducted to assess whether average house prices varied by the number of rooms. The test yielded a statistically significant result:
+
+F(11, 27,235) = 707.3, p < .001, indicating that at least one group mean differs from the others.
+
+Boxplot visualizations supported this finding by showing a consistent increase in price as the number of rooms increased. In particular, properties with six or more rooms exhibited both higher average prices and greater price variability. These patterns likely reflect the inclusion of luxury or high-end homes in these larger room categories.
+
+\subsubsection{Effect of Property Type on Price}
+We also conducted a one-way ANOVA to examine price differences among property types (house, townhouse, unit). This test also revealed a highly significant result:
+
+F(2, 27,244) = 2152, p < .001, suggesting that mean prices differ significantly by property type.
+
+The boxplots showed that:
+\begin{itemize}
+  \item Houses had the highest average prices and widest range,
+  \item Townhouses followed with moderate pricing, and
+  \item Units were the least expensive.
+\end{itemize}
+To identify specific group differences, we performed a Tukey HSD post-hoc test, which confirmed that all pairwise comparisons were statistically significant (p < .001). The mean differences were:
+\begin{itemize}
+  \item Townhouse vs. House: -\$272,641
+  \item Unit vs. House: -\$575,775
+  \item Unit vs. Townhouse: -\$303,134
+\end{itemize}
+
+The results demonstrate that both room count and property type significantly influence housing prices in Melbourne. These variables are thus important factors to consider in housing market evaluations and predictive modeling of real estate prices.
+
+
+\#Research Question 3
+\subsection{Can we accurately predict house prices using a regression model?}
+
+```{r eight, echo=FALSE, results='hold'}
+# Create dummies for categorical columns
+df_encoded <- dummy_cols(df, select_columns = c("Type", "Regionname", "ParkingArea"), remove_selected_columns = TRUE)
+
+# Prepare data
+x <- model.matrix(Price ~ ., data = df_encoded)[, -1]  # Remove intercept
+y <- df_encoded$Price
+
+# Identify column to keep (no penalty)
+col_to_keep <- "YearBuilt"
+
+# Set penalty: 1 for default (penalized), 0 for unpenalized
+penalties <- rep(1, ncol(x))
+penalties[which(colnames(x) == col_to_keep)] <- 0  # Lock YearBuilt
+
+# Set seed for reproducibility
+set.seed(123)
+
+# Fit Lasso model with custom penalty
+cv_lasso <- cv.glmnet(x, y, alpha = 1, penalty.factor = penalties)
+
+# Plot cross-validation curve
+plot(cv_lasso)
+title("Lasso Cross-Validation", line = 2.5)
+
+# Extract coefficients at optimal lambda
+lasso_coef <- coef(cv_lasso, s = "lambda.min")
+
+# Predict on training data
+preds <- predict(cv_lasso, newx = x, s = "lambda.min")
+
+# Evaluate model
+mae <- mean(abs(y - preds))
+r2 <- 1 - sum((y - preds)^2) / sum((y - mean(y))^2)
+
+cat("MAE:", round(mae, 4), "\n")
+cat("R-squared:", round(r2, 4), "\n")
+```
+\#Research Question 3
+\subsection{Can we accurately predict house prices using a regression model?}
+To accurately predict house prices based on the available data, selecting the best predictors is very important to get a food fit on the data. The dataset picked has a complex set of features with both numerical and categorical columns. To pick the best predictors among numerical columns, a correlation coefficient matrix heatmap was used, as shown in Figure 7 in Appendix.
+An interesting fact that can be observed from the plot is that the Price is highly related with Year
+Built, Bathrooms, Rooms and Bedrooms. However, it does not show a strong relation with Land
+size or Building area.
+
+Among Categorical columns, we created dummies for columns that did not have too many categories. This includes Type, Region name and parking area. We also detected and deleted outliers, so that they did not mess with the training process. Followed by this, we trained a LASSO regression model to complete both feature selection and get a good fit simultaneously. 
+The R2 score of the model increased from 0.632 to 0.66 with a mean absolute error being about 235,000. This is a significant update from the base model submitted with module 4.
+
+
+The following figure shows the actual vs predicted values. 
+```{r nine}
+plot(preds, y, main = "Predicted vs Actual Price", xlab = "Predicted", ylab = "Actual")
+abline(0, 1, col = "red")
+```
+\#Research Question #4
+\subsection{Is there a significant difference in median house prices between different regions in Melbourne?}
+```{r ten}
+# Boxplot: Price by Region (ordered by median)
+df_region <- df %>% filter(!is.na(Price), !is.na(Regionname))
+
+ggplot(df_region,
+       aes(x = fct_reorder(Regionname, Price, .fun = median, na.rm = TRUE),
+           y = Price, fill = Regionname)) +
+  geom_boxplot(alpha = 0.8, outlier.color = "black") +
+  scale_y_continuous(labels = comma) +
+  labs(title = "House Prices by Region in Melbourne",
+       x = "Region", y = "Price (AUD)") +
+  theme_minimal(base_size = 13) +
+  theme(legend.position = "none",
+        plot.title = element_text(face = "bold"),
+        axis.title = element_text(face = "bold"),
+        axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+# One-way ANOVA: Does region affect price?
+anova_region <- aov(Price ~ Regionname, data = df_region)
+summary(anova_region)
+
+# Tukey HSD: Post-hoc test to compare regions
+tukey_region <- TukeyHSD(anova_region)
+
+
+```
+\#Research Question #4
+\subsection{Is there a significant difference in median house prices between different regions in Melbourne?}
+To evaluate whether house prices differ significantly across Melbourne’s regions, we conducted a one-way ANOVA. This statistical test was appropriate because Regionname is a categorical variable, and our goal was to compare average prices across multiple independent groups (regions).
+
+\textbf{ANOVA Results}
+
+The one-way ANOVA revealed a statistically significant effect of region on house prices:
+
+F(7, 27,239) = 695.2, p < .001
+
+This result indicates that mean house prices are not equal across the different regions of Melbourne.
+
+\textbf{Visualization and Interpretation}
+Boxplot analysis reinforced the statistical finding. Regions such as Southern, Eastern, and South-Eastern exhibited higher average house prices and greater price variability. In contrast, outer regions like Western Victoria and Eastern Victoria showed lower median prices and narrower spreads.
+
+This pattern suggests that central and southern regions, likely due to better infrastructure, amenities, and proximity to business districts, command higher property values and attract premium housing.
+
+\textbf{Post-Hoc Analysis (Tukey HSD)}
+To pinpoint which regional differences were statistically significant, we conducted a Tukey HSD post-hoc test. Most pairwise comparisons showed significant differences in average price (p < .05). Key examples include:
+
+Southern vs. Western Victoria: +\$963,321
+
+Southern vs. Eastern Victoria: +\$681,600
+
+Northern vs. Eastern: -\$247,294
+
+Only a few comparisons—such as Northern Victoria vs. Eastern Victoria—did not yield significant differences, indicating some similarity in average pricing across these more distant regions.
+
+The analysis confirms that location plays a critical role in determining house prices in Melbourne. Properties in central and southern areas tend to be significantly more expensive, highlighting the strong influence of region as a driver of real estate value.
+
+
+
+
+\#Research Question #5
+\subsection{Is there a significant relationship between property type (e.g., house, unit, townhouse) and the selling price?}
+
+```{r eleven, echo=FALSE, results='hide'}
+df$LogPrice <- log(df$Price)
+
+# ANOVA Test
+anova_model <- aov(LogPrice ~ Type, data = df)
+#anova_model
+
+# Advanced Generalized Linear Model (GLM)
+# GLM with normal family
+glm_model <- glm(LogPrice ~ Type + Rooms + Bathroom + Car + Landsize + Distance + Regionname,
+                 data = df, family = gaussian())
+summary(glm_model)
+# Multivariable and Logistic Regression
+# Predicting High vs. Low Price Category
+# Create binary target
+df$HighPrice <- ifelse(df$Price > median(df$Price), 1, 0)
+
+# Logistic Regression
+logit_model <- glm(HighPrice ~ Type + Rooms + Bathroom + Car + Landsize + Distance,
+                   data = df, family = binomial())
+summary(logit_model)
+
+# Regularization with LASSO
+# Prepare data
+x <- model.matrix(Price ~ Type + Rooms + Bathroom + Car + Landsize + Distance + BuildingArea, data = df)[,-1]
+y <- df$Price
+
+# Split
+set.seed(123)
+train_idx <- sample(1:nrow(x), 0.7 * nrow(x))
+x_train <- x[train_idx, ]
+y_train <- y[train_idx]
+x_test <- x[-train_idx, ]
+y_test <- y[-train_idx]
+
+# Fit LASSO
+lasso_model <- cv.glmnet(x_train, y_train, alpha = 1)
+coef(lasso_model, s = "lambda.min")
+
+# Clustering (K-Means)
+# Scale numerical variables
+df_scaled <- scale(df[, c("Rooms", "Bathroom", "Car", "Landsize", "Price")])
+
+# K-means clustering
+set.seed(123)
+km <- kmeans(df_scaled, centers = 3)
+df$Cluster <- as.factor(km$cluster)
+```
+
+
+\#Research Question #5
+\subsection{Is there a significant relationship between property type (e.g., house, unit, townhouse) and the selling price?}
+\textbf{One-Way ANOVA on Log-Transformed Price}
+
+To statistically test whether property type affects price, we conducted a one-way ANOVA.
+
+After adjusting for covariates, both townhouses and units still had significantly lower selling prices compared to houses. Other predictors like Rooms and Distance were also significant, validating that property type independently influences price.
+
+A unit is about 92% less likely to be in the high-price category than a house. Townhouses are about 57% less likely. Property type is a strong classification predictor.
+
+Even under regularization, property type remains among the most influential features affecting price, confirming its robustness in prediction.
+This unsupervised learning technique segmented the housing market into 3 clusters, visually confirming distinct groupings related to price and size.
+
+\newpage
+
+The analysis strongly supports the conclusion that property type has a significant and consistent influence on housing prices in the Melbourne real estate market. This conclusion is reinforced through multiple analytical techniques:
+\begin{itemize}
+  \item Descriptive statistics and boxplots show that houses generally have higher median prices than townhouses and units.
+  \item A one-way ANOVA confirmed that these differences are statistically significant (p < .001), indicating that the average log-transformed prices vary by property type.
+  \item The Generalized Linear Model (GLM) further validated that even after controlling for other influential variables like number of rooms, bathrooms, and distance to the CBD, property type remains a significant independent predictor. Units and townhouses consistently sell for less than houses.
+  \item Logistic regression added practical insight, showing that units are about 92% less likely and townhouses 57% less likely to fall into the high-price category compared to houses. This suggests that property type can effectively predict market segment classification.
+  \item The LASSO regression model, which penalizes less influential predictors, still retained property type as a major contributor to price prediction, highlighting its robustness in modeling.
+  \item Finally, K-means clustering identified distinct market segments aligned with property value and size. This supports strategic segmentation and targeted marketing or development strategies based on property characteristics.
+\end{itemize}
+
+
+\section{Conclusion} 
+
+There is clear and consistent evidence that property type significantly impacts selling price in the Melbourne housing market. Houses command the highest prices, while units and townhouses fall into lower price categories. These findings are actionable for stakeholders such as real estate investors, policymakers, and developers, as they emphasize the importance of property classification when assessing market value or planning housing strategies.
+ 
+\section{Recommendation} 
+
+Investors and developers should prioritize house-type properties when aiming for high-value returns, while units and townhouses may be more suitable for affordable housing initiatives or first-time buyers. Future research could expand this model by incorporating additional variables like location-specific trends, property condition, and market seasonality.
+
+
+
+```{r eleven, echo=FALSE}
+# Visualize clusters
+ggplot(df, aes(x = Landsize, y = Price, color = Cluster)) +
+  geom_point(alpha = 0.9) +
+  labs(title = "K-Means Clustering: Landsize vs Price")
+
+plot(lasso_model)
+```
+
+```{r region-boxplot, echo=FALSE, fig.cap="House Prices by Region in Melbourne"}
+df %>%
+  group_by(Regionname) %>%
+  mutate(med_price = median(Price)) %>%
+  ggplot(aes(x = fct_reorder(Regionname, med_price), y = Price, fill = Regionname)) +
+  geom_boxplot(alpha = 0.8, outlier.color = "black") +
+  scale_y_continuous(labels = comma) +
+  labs(title = "House Prices by Region in Melbourne",
+       x = "Region", y = "Price (AUD)") +
+  theme_minimal(base_size = 13) +
+  theme(legend.position = "none",
+        plot.title = element_text(face = "bold"),
+        axis.title = element_text(face = "bold"),
+        axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+```{r}
+# One-way ANOVA: Does region affect price?
+anova_region <- aov(Price ~ Regionname, data = df)
+
+# Tukey HSD: Post-hoc test to compare regions
+TukeyHSD(anova_region)
+```
+
+
+
+
+\section{Justification for methods used}
+
+\begin{enumerate}
+  \item \textbf{Multiple linear regression:} It is used to analyze how location affects housing prices because it allows us to assess the impact of both numeric (Distance) and categorical (Suburb) variables on a continuous outcome (Price). MLR helps isolate the effect of each variable while controlling for others, making it ideal for understanding complex, location-driven variation. It also enables us to perform essential diagnostic checks to evaluate assumptions like linearity, homoscedasticity, and multicollinearity.
+
+  \item \textbf{One-Way ANOVA (Analysis of Variance):} ANOVA is appropriate because:
+    \begin{itemize}
+     \item The independent variable Type is categorical (with three groups: house (h), unit (u), townhouse (t)).
+     \item The dependent variable Price is continuous.
+     \item ANOVA determines whether the mean prices are significantly different across these types.
+     \item It is also appropriate for research question 5 because Regionname is a categorical variable with multiple levels, and we aimed to test whether average housing prices differ across regions. The Tukey HSD test followed to determine which regional comparisons were statistically significant.
+    \end{itemize}
+  \item \textbf{Tukey HSD Post-Hoc Test:} If ANOVA is significant, post-hoc comparison is necessary to identify which groups are significantly different.
+
+\end{enumerate}
+
+Two one-way ANOVAs: Its appropriate for research question 2 because both room count and property type are categorical variables, and our goal was to compare mean prices across multiple groups. ANOVA is appropriate for detecting whether group means differ significantly, and Tukey HSD was used to identify specific pairwise differences.
+
+
+
+
+
+\section{References}
+
+Bluman, A. G. (2012). Elementary statistics (10th ed.). McGraw-Hill Education.
+
+Friedman, J., Hastie, T., & Tibshirani, R. (2010). Regularization paths for generalized linear models via coordinate descent. Journal of Statistical Software, 33(1), 1–22.
+
+Kabacoff, R. I. (2015). R in action: Data analysis and graphics with R (2nd ed.). Manning Publications.
+
+Provost, J.-S. (2025). Regression diagnostics with R [Video]. Canvas. https://northeastern.instructure.com/courses/221013/assignments/2683591
+
+Provost, J.-S. (2025). Chi square and ANOVA [Video]. Canvas. https://northeastern.instructure.com/courses/221013/assignments/2683593
+
+Provost, J.-S. (2025). Logistic regression and classification [Video]. Canvas@Northeastern. https://northeastern.instructure.com/courses/221013/assignments/2683596
+
+Provost, J.-S. (2025). Module 3 – Recap: GLM & logistic regression [PDF]. Department of College of Professional Studies, Northeastern University.
+
+
+
