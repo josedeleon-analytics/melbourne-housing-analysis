@@ -74,7 +74,7 @@ cd melbourne-housing-analysis
 
 ## 📌 Dataset
 The original dataset is publicly available on Kaggle:
-[Video Game Sales 2024 – by Hosam Mhmd Ali](https://www.kaggle.com/datasets/ronikmalhotra/melbourne-housing-dataset)
+[Melbourne Housing Dataset](https://www.kaggle.com/datasets/ronikmalhotra/melbourne-housing-dataset)
 
 ## 📜 References
 
