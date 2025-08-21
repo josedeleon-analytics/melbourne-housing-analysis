@@ -1,13 +1,13 @@
-Melbourne Housing Price Analysis
+# Melbourne Housing Price Analysis
 
 📊 Statistical and machine learning analysis of Melbourne housing prices using R.
 
-📌 Project Overview
+## 📌 Project Overview
 
 This project investigates the key factors that influence housing prices in Melbourne, Australia.
 We use statistical modeling and machine learning techniques to analyze property prices, property type differences, and regional variations.
 
-Key Research Questions:
+## Key Research Questions:
 
 Does location significantly affect housing prices?
 
@@ -19,7 +19,7 @@ Do different regions of Melbourne exhibit significant price differences?
 
 How does property type (house, unit, townhouse) relate to selling price?
 
-🛠 Methods Used
+## 🛠 Methods Used
 
 Exploratory Data Analysis (EDA): Boxplots, histograms, descriptive statistics.
 
@@ -37,7 +37,7 @@ Regularization (LASSO): To identify the most influential predictors.
 
 K-Means Clustering: To segment housing markets by size and price.
 
-📈 Results Summary
+## 📈 Results Summary
 
 Region Matters: Significant differences in house prices across Melbourne regions (Southern and Eastern highest; Western Victoria lowest).
 
@@ -47,7 +47,7 @@ Predictors: Number of rooms, distance to CBD, and property type are strong deter
 
 Clusters: Housing market can be grouped into 3 main clusters by land size and price.
 
-📂 Repository Structure
+## 📂 Repository Structure
 melbourne-housing-analysis/
 │
 ├── FinalReport_github.Rmd   # R Markdown source code
@@ -57,7 +57,7 @@ melbourne-housing-analysis/
 ├── .gitignore               # Ignored files config
 └── README.md                # Project description (this file)
 
-⚙️ How to Run
+## ⚙️ How to Run
 
 Clone this repo:
 
@@ -74,7 +74,7 @@ install.packages(c("tidyverse", "ggplot2", "glmnet", "car", "broom"))
 
 Knit the RMarkdown file to generate the PDF report.
 
-📜 References
+## 📜 References
 
 Bluman, A. G. (2012). Elementary statistics (10th ed.). McGraw-Hill Education.
 
@@ -82,6 +82,6 @@ Friedman, J., Hastie, T., & Tibshirani, R. (2010). Regularization paths for gene
 
 Kabacoff, R. I. (2015). R in Action. Manning Publications.
 
-🔑 License
+## 🔑 License
 
 This project is licensed under the MIT License — see the LICENSE file for details.
