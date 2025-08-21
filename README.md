@@ -58,7 +58,7 @@ melbourne-housing-analysis/
 ├── .gitignore # Ignored files config
 └── README.md # Project description (this file)
 ```
-
+```
 melbourne-housing-analysis/
 │
 ├── FinalReport_github.Rmd   # R Markdown source code
@@ -67,7 +67,7 @@ melbourne-housing-analysis/
 ├── LICENSE                  # License (MIT)
 ├── .gitignore               # Ignored files config
 └── README.md                # Project description (this file)
-
+```bash
 ## ▶️ How to Reproduce This Project
 
 ```bash
