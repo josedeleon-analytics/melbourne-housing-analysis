@@ -21,31 +21,31 @@ We use statistical modeling and machine learning techniques to analyze property 
 
 ## 🛠 Methods Used
 
-Exploratory Data Analysis (EDA): Boxplots, histograms, descriptive statistics.
+- Exploratory Data Analysis (EDA): Boxplots, histograms, descriptive statistics.
 
-Multiple Linear Regression (MLR): To assess the impact of location and distance.
+- Multiple Linear Regression (MLR): To assess the impact of location and distance.
 
-One-Way ANOVA: To test differences in mean housing prices across categorical groups (Region, Property Type).
+- One-Way ANOVA: To test differences in mean housing prices across categorical groups (Region, Property Type).
 
-Tukey HSD Post-Hoc Test: For pairwise regional comparisons.
+- Tukey HSD Post-Hoc Test: For pairwise regional comparisons.
 
-Generalized Linear Model (GLM): To model log-transformed price with multiple predictors.
+- Generalized Linear Model (GLM): To model log-transformed price with multiple predictors.
 
-Logistic Regression: To classify properties into high-price vs low-price groups.
+- Logistic Regression: To classify properties into high-price vs low-price groups.
 
-Regularization (LASSO): To identify the most influential predictors.
+- Regularization (LASSO): To identify the most influential predictors.
 
-K-Means Clustering: To segment housing markets by size and price.
+- K-Means Clustering: To segment housing markets by size and price.
 
 ## 📈 Results Summary
 
-Region Matters: Significant differences in house prices across Melbourne regions (Southern and Eastern highest; Western Victoria lowest).
+- Region Matters: Significant differences in house prices across Melbourne regions (Southern and Eastern highest; Western Victoria lowest).
 
-Property Type Matters: Houses sell for more than townhouses and units (confirmed via ANOVA, GLM, and logistic regression).
+- Property Type Matters: Houses sell for more than townhouses and units (confirmed via ANOVA, GLM, and logistic regression).
 
-Predictors: Number of rooms, distance to CBD, and property type are strong determinants of price.
+- Predictors: Number of rooms, distance to CBD, and property type are strong determinants of price.
 
-Clusters: Housing market can be grouped into 3 main clusters by land size and price.
+- Clusters: Housing market can be grouped into 3 main clusters by land size and price.
 
 ## 📂 Repository Structure
 melbourne-housing-analysis/
