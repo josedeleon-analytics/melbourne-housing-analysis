@@ -48,7 +48,7 @@ We use statistical modeling and machine learning techniques to analyze property 
 - Clusters: Housing market can be grouped into 3 main clusters by land size and price.
 
 ## 📂 Repository Structure
-
+### Tree View
 ```
 melbourne-housing-analysis/
 ├── FinalReport_github.Rmd # R Markdown source code
@@ -58,6 +58,14 @@ melbourne-housing-analysis/
 ├── .gitignore # Ignored files config
 └── README.md # Project description (this file)
 ```
+
+### File Descriptions
+- [**FinalReport_github.Rmd**](FinalReport_github.Rmd): R Markdown source code with statistical and ML analysis  
+- [**FinalReport.pdf**](FinalReport.pdf): Final compiled report (ready-to-read version)  
+- [**Melbourne_housing.csv**](Melbourne_housing.csv): Dataset used in the analysis  
+- [.gitignore](.gitignore): Files/folders excluded from version control  
+- [LICENSE](LICENSE): Open-source license (MIT)  
+- [README.md](README.md): Project overview and documentation  
 
 ## ▶️ How to Reproduce This Project
 
