@@ -9,15 +9,15 @@ We use statistical modeling and machine learning techniques to analyze property 
 
 ## 🔍 Key Research Questions:
 
-Does location significantly affect housing prices?
+- Does location significantly affect housing prices?
 
-Do room counts and property type impact prices?
+- Do room counts and property type impact prices?
 
-Can we accurately predict house prices using a regression model?
+- Can we accurately predict house prices using a regression model?
 
-Do different regions of Melbourne exhibit significant price differences?
+- Do different regions of Melbourne exhibit significant price differences?
 
-How does property type (house, unit, townhouse) relate to selling price?
+- How does property type (house, unit, townhouse) relate to selling price?
 
 ## 🛠 Methods Used
 
