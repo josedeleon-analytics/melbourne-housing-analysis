@@ -72,6 +72,10 @@ cd melbourne-housing-analysis
 ```
 3. Knit the RMarkdown file to generate the PDF report.
 
+## 📌 Dataset
+The original dataset is publicly available on Kaggle:
+[Video Game Sales 2024 – by Hosam Mhmd Ali](https://www.kaggle.com/datasets/ronikmalhotra/melbourne-housing-dataset)
+
 ## 📜 References
 
 Bluman, A. G. (2012). Elementary statistics (10th ed.). McGraw-Hill Education.
