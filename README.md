@@ -87,3 +87,10 @@ Kabacoff, R. I. (2015). R in Action. Manning Publications.
 ## 🔑 License
 
 This project is licensed under the MIT License — see the LICENSE file for details.
+
+
+## 👤 Author
+Jose De Leon
+Master’s in Analytics Candidate, Northeastern University
+📬 [Email me](mailto:j.angel2294@gmail.com)  
+🔗 [LinkedIn](https://www.linkedin.com/in/jose-de-leon-analytics/)
