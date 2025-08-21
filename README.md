@@ -65,7 +65,9 @@ cd melbourne-housing-analysis
 ```
 1. Open FinalReport_github.Rmd in RStudio.
 2. Install required R packages:
-   install.packages(c("tidyverse", "ggplot2", "glmnet", "car", "broom"))
+```bash
+    install.packages(c("tidyverse", "ggplot2", "glmnet", "car", "broom"))
+```
 3. Knit the RMarkdown file to generate the PDF report.
 
 ## 📜 References
