@@ -57,22 +57,16 @@ melbourne-housing-analysis/
 ├── .gitignore               # Ignored files config
 └── README.md                # Project description (this file)
 
-## ⚙️ How to Run
+## ▶️ How to Reproduce This Project
 
-Clone this repo:
-
+```bash
 git clone https://github.com/your-username/melbourne-housing-analysis.git
 cd melbourne-housing-analysis
-
-
-Open FinalReport_github.Rmd in RStudio.
-
-Install required R packages:
-
-install.packages(c("tidyverse", "ggplot2", "glmnet", "car", "broom"))
-
-
-Knit the RMarkdown file to generate the PDF report.
+```
+1. Open FinalReport_github.Rmd in RStudio.
+2. Install required R packages:
+   install.packages(c("tidyverse", "ggplot2", "glmnet", "car", "broom"))
+3. Knit the RMarkdown file to generate the PDF report.
 
 ## 📜 References
 
