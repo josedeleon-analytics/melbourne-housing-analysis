@@ -7,7 +7,7 @@
 This project investigates the key factors that influence housing prices in Melbourne, Australia.
 We use statistical modeling and machine learning techniques to analyze property prices, property type differences, and regional variations.
 
-## Key Research Questions:
+## 🔍 Key Research Questions:
 
 Does location significantly affect housing prices?
 
