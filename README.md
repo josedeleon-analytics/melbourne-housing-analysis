@@ -2,10 +2,14 @@
 
 📊 Statistical and machine learning analysis of Melbourne housing prices using R.
 
+---
+
 ## 📌 Project Overview
 
 This project investigates the key factors that influence housing prices in Melbourne, Australia.
 We use statistical modeling and machine learning techniques to analyze property prices, property type differences, and regional variations.
+
+---
 
 ## 🔍 Key Research Questions:
 
@@ -18,6 +22,8 @@ We use statistical modeling and machine learning techniques to analyze property 
 - Do different regions of Melbourne exhibit significant price differences?
 
 - How does property type (house, unit, townhouse) relate to selling price?
+
+---
 
 ## 🛠 Methods Used
 
@@ -37,6 +43,8 @@ We use statistical modeling and machine learning techniques to analyze property 
 
 - K-Means Clustering: To segment housing markets by size and price.
 
+---
+
 ## 📈 Results Summary
 
 - Region Matters: Significant differences in house prices across Melbourne regions (Southern and Eastern highest; Western Victoria lowest).
@@ -46,6 +54,8 @@ We use statistical modeling and machine learning techniques to analyze property 
 - Predictors: Number of rooms, distance to CBD, and property type are strong determinants of price.
 
 - Clusters: Housing market can be grouped into 3 main clusters by land size and price.
+
+---
 
 ## 📂 Repository Structure
 ### Tree View
@@ -67,6 +77,8 @@ melbourne-housing-analysis/
 - [LICENSE](LICENSE): Open-source license (MIT)  
 - [README.md](README.md): Project overview and documentation  
 
+---
+
 ## ▶️ How to Reproduce This Project
 
 ```bash
@@ -80,21 +92,26 @@ cd melbourne-housing-analysis
 ```
 3. Knit the RMarkdown file to generate the PDF report.
 
+---
+
 ## 📌 Dataset
 The original dataset is publicly available on Kaggle:
 [Melbourne Housing Dataset](https://www.kaggle.com/datasets/ronikmalhotra/melbourne-housing-dataset)
 
+---
 
 ## 🔑 License
 
 This project is licensed under the MIT License — see the LICENSE file for details.
 
+---
 
 ## 📊 Key Plots
 
 ![House Prices by Suburb (Top 10)](plots/house_prices_by_suburb.png)
 ![House Prices by Region](plots/house_prices_by_region.png)
 
+---
 
 ## 📜 References
 
@@ -104,6 +121,7 @@ Friedman, J., Hastie, T., & Tibshirani, R. (2010). Regularization paths for gene
 
 Kabacoff, R. I. (2015). R in Action. Manning Publications.
 
+---
 
 ## 👤 Author
 Jose De Leon
