@@ -84,6 +84,16 @@ cd melbourne-housing-analysis
 The original dataset is publicly available on Kaggle:
 [Melbourne Housing Dataset](https://www.kaggle.com/datasets/ronikmalhotra/melbourne-housing-dataset)
 
+
+## 🔑 License
+
+This project is licensed under the MIT License — see the LICENSE file for details.
+
+## 📊 Key Plots
+
+![House Prices by Suburb (Top 10)](plots/house_prices_by_suburb.png)
+![House Prices by Region](plots/house_prices_by_region.png)
+
 ## 📜 References
 
 Bluman, A. G. (2012). Elementary statistics (10th ed.). McGraw-Hill Education.
@@ -91,11 +101,6 @@ Bluman, A. G. (2012). Elementary statistics (10th ed.). McGraw-Hill Education.
 Friedman, J., Hastie, T., & Tibshirani, R. (2010). Regularization paths for generalized linear models via coordinate descent. JSS.
 
 Kabacoff, R. I. (2015). R in Action. Manning Publications.
-
-## 🔑 License
-
-This project is licensed under the MIT License — see the LICENSE file for details.
-
 
 ## 👤 Author
 Jose De Leon
