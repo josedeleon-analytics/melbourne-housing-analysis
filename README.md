@@ -1,4 +1,7 @@
 # Melbourne Housing Price Analysis
+![License: MIT](https://img.shields.io/badge/License-MIT-green.svg) 
+![Last Commit](https://img.shields.io/github/last-commit/josedeleon-analytics/melbourne-housing-analysis) 
+![R](https://img.shields.io/badge/R-Stats%20%26%20ML-blue)
 
 📊 Statistical and machine learning analysis of Melbourne housing prices using R.
 
