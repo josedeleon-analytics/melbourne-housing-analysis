@@ -121,7 +121,7 @@ Clear differences in prices between houses, townhouses, and units.
 
 ### 3. Predicted vs Actual Prices  
 Demonstrates the performance of the regression model.  
-![Predicted vs Actual Prices](plots/predicted_vs_actual_price.png)
+![Predicted vs Actual Prices](plots/Predicted%20vs%20Actual%20Price.png)
 
 ### 4. LASSO Cross-Validation Curve *(Advanced ML)*  
 Highlights the use of regularization and model selection.  
