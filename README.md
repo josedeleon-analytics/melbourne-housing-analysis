@@ -109,10 +109,23 @@ This project is licensed under the MIT License — see the LICENSE file for deta
 
 ---
 
-## 📊 Key Plots
+## 📊 Key Plots  
 
-![House Prices by Suburb (Top 10)](plots/house_prices_by_suburb.png)
-![House Prices by Region](plots/house_prices_by_region.png)
+### 1. House Prices by Region  
+Shows how housing prices vary significantly across Melbourne’s regions.  
+![House Prices by Region](plots/house_prices_by_region.png)  
+
+### 2. House Prices by Property Type  
+Clear differences in prices between houses, townhouses, and units.  
+![House Prices by Property Type](plots/House%20prices%20by%20property%20type.png)  
+
+### 3. Predicted vs Actual Prices  
+Demonstrates the performance of the regression model.  
+![Predicted vs Actual Prices](plots/predicted_vs_actual_price.png)
+
+### 4. LASSO Cross-Validation Curve *(Advanced ML)*  
+Highlights the use of regularization and model selection.  
+![LASSO Cross Validation](plots/lasso_cross_validation.png)  
 
 ---
 
